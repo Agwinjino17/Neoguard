@@ -1,0 +1,1096 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Top Level Dashboard Stats -->
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card" style="border-left: 4px solid var(--primary);">
+            <h3>Total Patients Monitored</h3>
+            <div class="value" id="globalTotalPatients"><i class="ph ph-spinner ph-spin"></i></div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid var(--warning);">
+            <h3>High Risk Patients</h3>
+            <div class="value" id="globalHighRisk" style="color: var(--warning);"><i class="ph ph-spinner ph-spin"></i>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;"><i
+                    class="ph-bold ph-trend-up"></i> Active tracking</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid var(--danger);">
+            <h3>Critical Alerts</h3>
+            <div class="value" id="globalCritical" style="color: var(--danger);">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid var(--success);">
+            <h3>System Status</h3>
+            <div class="value"
+                style="color: var(--success); font-size: 1.2rem; display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <div
+                    style="width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite;">
+                </div>
+                Operational
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Command Center Splitting -->
+    <div class="command-center-grid">
+
+        <!-- ======================= -->
+        <!-- LEFT COLUMN (PRIMARY)   -->
+        <!-- ======================= -->
+        <div class="command-center-left">
+
+            <!-- Search Bar (Moved Inside Grid) -->
+            <div class="glass-container" style="padding: 1rem 1.5rem; display: flex; gap: 15px; align-items: center;">
+                <i class="ph-bold ph-magnifying-glass" style="color: var(--primary); font-size: 1.2rem;"></i>
+                <input type="text" id="patientSearch"
+                    placeholder="Search Patient UID (e.g. NEO-2026-001) for deep analysis..."
+                    style="background: transparent; border: none; outline: none; color: white; flex-grow: 1; font-size: 0.95rem;">
+                <button onclick="fetchHistory()" class="btn-primary"
+                    style="margin: 0; padding: 8px 20px;">Analyze</button>
+            </div>
+
+            <!-- ICU Emergency Broadcast Banner -->
+            <div id="emergencyBroadcast"
+                style="display: none; background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3); text-align: center; font-weight: 700; animation: pulse 2s infinite;">
+                <!-- Filled via JS -->
+            </div>
+
+            <!-- Primary Integrated Patient Risk Table -->
+            <div class="glass-container" style="border-top: 4px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="display: flex; align-items: center; gap: 10px;">
+                        <i class="ph-fill ph-users-three" style="color: var(--primary);"></i> Active Patient Risk
+                        Monitoring
+                    </h3>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">LIVE FEED <div
+                            style="display: inline-block; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; margin-left: 5px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <th
+                                    style="padding: 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem;">
+                                    Patient ID</th>
+                                <th
+                                    style="padding: 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem;">
+                                    Primary Risk</th>
+                                <th
+                                    style="padding: 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem;">
+                                    Location</th>
+                                <th
+                                    style="padding: 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-align: center;">
+                                    Status</th>
+                                <th
+                                    style="padding: 12px; color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-align: right;">
+                                    Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="globalAlertsTable">
+                            <tr>
+                                <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                                    <i class="ph ph-shield-check"
+                                        style="font-size: 2rem; display: block; margin-bottom: 10px; color: var(--success);"></i>
+                                    All parameters stable across global network.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ICU Resource Optimization Panel Upgraded -->
+            <div class="glass-container" style="margin-bottom: 2rem; border-left: 4px solid #8b5cf6;"
+                id="icuResourcePanel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="ph-fill ph-hospital" style="color: #8b5cf6;"></i> ICU Resource Forecast (24H)
+                    </h3>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div class="scenario-select-wrapper">
+                            <select id="icuScenarioSelect" onchange="fetchICUResources()" class="scenario-select">
+                                <option value="Current">Scenario: Current Baseline</option>
+                                <option value="Severe Outbreak">Scenario: Severe Outbreak</option>
+                            </select>
+                            <i class="ph ph-caret-down"
+                                style="position: absolute; right: 12px; pointer-events: none; color: var(--text-muted);"></i>
+                        </div>
+                        <div id="icuTrendBadge"
+                            style="padding: 6px 12px; border-radius: 10px; font-weight: 700; font-size: 0.75rem; background: var(--bg-hover);">
+                            <i class="ph-bold ph-chart-line-up" id="icuTrendIcon"></i> <span
+                                id="icuTrendText">Loading...</span>
+                        </div>
+                        <div id="icuStatusBadge"
+                            style="padding: 6px 12px; border-radius: 10px; font-weight: 700; font-size: 0.75rem; color: white; background: #64748b;">
+                            <i class="ph-bold ph-shield-check" id="icuStatusIcon"></i> <span
+                                id="icuStatusText">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <div class="icu-kpi-card">
+                        <div class="icu-kpi-icon"
+                            style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                            <i class="ph-fill ph-users-four"></i>
+                        </div>
+                        <div class="icu-kpi-value" id="icuExpectedSepsis">--</div>
+                        <div class="icu-kpi-label">Expected Critical</div>
+                    </div>
+
+                    <div class="icu-kpi-card" style="border-top: 3px solid var(--primary);">
+                        <div class="icu-kpi-icon">
+                            <i class="ph-fill ph-bed"></i>
+                        </div>
+                        <div class="icu-kpi-value" id="icuBedsReq">--</div>
+                        <div class="icu-kpi-label">Beds Required</div>
+                    </div>
+
+                    <div class="icu-kpi-card" style="border-top: 3px solid #0ea5e9;">
+                        <div class="icu-kpi-icon"
+                            style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border-color: rgba(14, 165, 233, 0.2);">
+                            <i class="ph-fill ph-wind"></i>
+                        </div>
+                        <div class="icu-kpi-value" id="icuVentsReq">--</div>
+                        <div class="icu-kpi-label">Vents Required</div>
+                    </div>
+
+                    <div class="icu-kpi-card" style="border-top: 3px solid #8b5cf6;">
+                        <div class="icu-kpi-icon"
+                            style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2);">
+                            <i class="ph-fill ph-stethoscope"></i>
+                        </div>
+                        <div class="icu-kpi-value" id="icuStaffReq">--</div>
+                        <div class="icu-kpi-label">Required Staff</div>
+                    </div>
+                </div>
+
+                <div class="icu-data-source-banner">
+                    <i class="ph-fill ph-info" style="color: var(--primary); font-size: 1rem;"></i>
+                    <span id="icuDataSourceText">Forecast intelligence derived from leading indicator risk vectors over
+                        trailing 24H.</span>
+                </div>
+            </div>
+
+            <!-- AI Epidemic Early Warning System Panel -->
+            <div class="glass-container" style="margin-bottom: 2rem; border-left: 4px solid #ec4899;"
+                id="epidemicPanel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="display: flex; align-items: center; gap: 10px;">
+                        <i class="ph-fill ph-globe-hemisphere-west" style="color: #ec4899;"></i> AI Epidemic Early
+                        Warning
+                        System
+                    </h3>
+                    <button onclick="simulateEpidemicOutbreak()" class="btn-primary"
+                        style="background: #ec4899; color: white; padding: 6px 15px; border-radius: 8px; font-size: 0.8rem; border: none; font-weight: 600; cursor: pointer;">
+                        <i class="ph-bold ph-flask"></i> Simulate Outbreak (Demo)
+                    </button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <!-- Left: Chart.js Line Graph for 7-Day Trending -->
+                    <div
+                        style="background: var(--bg-hover); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div
+                            style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 10px;">
+                            7-Day
+                            Disease Case Trending</div>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="epidemicTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: Ward Heatmap & Alerts -->
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+
+                        <!-- Ward Heatmap -->
+                        <div
+                            style="background: var(--bg-hover); padding: 15px; border-radius: 12px; border: 1px solid var(--border); flex: 1;">
+                            <div
+                                style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 10px;">
+                                Ward Risk Heatmap</div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted);">
+                                        <th style="padding: 5px;">Ward</th>
+                                        <th style="padding: 5px;">Cases</th>
+                                        <th style="padding: 5px;">Risk Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wardHeatmapBody">
+                                    <tr>
+                                        <td colspan="3" style="text-align:center; padding: 10px;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Epidemic Alerts Feed -->
+                        <div
+                            style="background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.2); flex: 1; overflow-y: auto; max-height: 120px;">
+                            <div
+                                style="font-size: 0.85rem; color: #ef4444; font-weight: 700; margin-bottom: 10px; display:flex; align-items:center; gap:5px;">
+                                <i class="ph-fill ph-warning-octagon"></i> Outbreak Warnings
+                            </div>
+                            <div id="epidemicAlertsFeed" style="display: flex; flex-direction: column; gap: 8px;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">No anomalies detected.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Single Deep Dive Context Panel (Hidden until searched) -->
+            <div id="deepDiveWrapper" style="display: none; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- Multi-Disease Results Cards -->
+                    <div class="glass-container" id="multiDiseaseTableContainer" style="display: none;">
+                        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                            <i class="ph-fill ph-activity text-cyber-cyan"></i> Selected Patient Risk Profile (<span
+                                id="selectedUidSpan"></span>)
+                        </h3>
+                        <div id="multiDiseaseCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Time Series Chart -->
+                    <div class="chart-container"
+                        style="margin-top: 0; background: var(--surface); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Temporal Vital Tracking</h3>
+                            <select id="vitalSelect" onchange="renderChart()"
+                                style="padding: 6px 12px; background: rgba(255,255,255,0.05); color: white; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem; outline: none;">
+                                <option value="hr">Heart Rate (HR)</option>
+                                <option value="o2sat">O2 Saturation</option>
+                                <option value="temp">Temperature</option>
+                                <option value="resp">Respiration</option>
+                            </select>
+                        </div>
+                        <canvas id="timeSeriesChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- History Sidebar -->
+                <div class="glass-container">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem;"><i
+                            class="ph-bold ph-clock-counter-clockwise"></i> Historical Assessments</h3>
+                    <div id="historyList"
+                        style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto;">
+                        <!-- JS injected -->
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Left Column -->
+
+        <!-- ======================= -->
+        <!-- RIGHT RAIL (WIDGETS)    -->
+        <!-- ======================= -->
+        <div class="command-center-rail">
+
+            <!-- Smart Alert Center Widget -->
+            <div class="glass-container"
+                style="border-top: 4px solid var(--accent); padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3
+                    style="font-size: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-warning-octagon"
+                            style="color: var(--accent);"></i> SMART ALERT CENTER</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">AUTONOMOUS</span>
+                </h3>
+                <div id="smartAlertsRailList"
+                    style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                    <span
+                        style="font-size: 0.8rem; color: var(--text-muted); text-align: center; display: block; margin-top: 20px;">No
+                        alerts processing.</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Live Clinical Feed Widget -->
+            <div class="glass-container" style="border-top: 4px solid var(--primary); padding: 1.5rem;">
+                <h3
+                    style="font-size: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-activity"
+                            style="color: var(--primary);"></i> LIVE CLINICAL FEED</span>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <div
+                            style="width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: blink 1s infinite;">
+                        </div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">LIVE</span>
+                    </div>
+                </h3>
+                <div id="liveClinicalFeed"
+                    style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Populated by JS -->
+                    <span
+                        style="font-size: 0.8rem; color: var(--text-muted); text-align: center; display: block; margin-top: 20px;">Initializing
+                        monitoring network...</span>
+                </div>
+            </div>
+
+        </div> <!-- End Right Rail -->
+    </div> <!-- End Command Center Grid -->
+</div>
+<style>
+    /* Rail Alert Card Styles */
+    .rail-alert-card {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-left: 3px solid var(--danger);
+        padding: 12px;
+        border-radius: 8px;
+        animation: fadeInSlide 0.4s ease forwards;
+    }
+
+    @keyframes fadeInSlide {
+        from {
+            opacity: 0;
+            transform: translateX(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* ICU Cyber Card Styles */
+    .icu-kpi-card {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .icu-kpi-card:hover {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(6, 182, 212, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .icu-kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(6, 182, 212, 0.1);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        font-size: 1.25rem;
+        border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+
+    .icu-kpi-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 4px;
+        letter-spacing: -0.02em;
+    }
+
+    .icu-kpi-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .scenario-select-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .scenario-select {
+        background: rgba(15, 23, 42, 0.8);
+        color: white;
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        appearance: none;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.2s;
+        padding-right: 32px;
+    }
+
+    .scenario-select:hover,
+    .scenario-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+    }
+
+    .icu-data-source-banner {
+        margin-top: 15px;
+        background: rgba(6, 182, 212, 0.05);
+        border: 1px solid rgba(6, 182, 212, 0.1);
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+</style>
+
+<script>
+    let chart;
+    let currentPatientData = null;
+
+    function fetchGlobalKPIs() {
+        fetch('/api/dashboard_stats')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                document.getElementById('globalTotalPatients').innerText = data.total_patients;
+                document.getElementById('globalHighRisk').innerText = data.active_critical_alerts;
+                document.getElementById('globalCritical').innerText = data.active_critical_alerts;
+            });
+    }
+
+    // Call once immediately
+    fetchGlobalKPIs();
+    setInterval(fetchGlobalKPIs, 30000); // 30s refresh
+
+    function assessPatient(uid) {
+        document.getElementById('patientSearch').value = uid;
+        fetchHistory();
+
+        // Smooth scroll to the deep dive section after history is fetched and rendered
+        setTimeout(() => {
+            const deepDive = document.getElementById('deepDiveWrapper');
+            if (deepDive) {
+                deepDive.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 300);
+    }
+
+    function fetchHistory() {
+        const uid = document.getElementById('patientSearch').value;
+        if (!uid) return alert("Please enter a Patient UID or initiate Voice Command");
+
+        showLoader();
+        fetch(`/api/history/${uid}`)
+            .then(res => res.json())
+            .then(data => {
+                hideLoader();
+                if (data.error) return alert(data.error);
+                currentPatientData = data;
+                updateDashboard();
+            })
+            .catch(err => {
+                hideLoader();
+                console.error(err);
+            });
+    }
+
+    function updateDashboard() {
+        // Reveal deep dive container
+        document.getElementById('deepDiveWrapper').style.display = 'grid';
+        document.getElementById('deepDiveWrapper').style.animation = 'fadeInSlide 0.4s ease';
+        document.getElementById('selectedUidSpan').innerText = currentPatientData.uid;
+
+        // Calculate Metrics (Optional: Keep UI stateless, relying on API, but maintaining logic here)
+
+        // Populate Multi-Disease Cards
+        if (currentPatientData.disease_predictions && currentPatientData.disease_predictions.length > 0) {
+            const latest = currentPatientData.disease_predictions[currentPatientData.disease_predictions.length - 1];
+            const container = document.getElementById('multiDiseaseCardsGrid');
+            container.innerHTML = '';
+
+            const diseases = [
+                { name: 'Sepsis', key: 'sepsis_risk', icon: 'ph-virus' },
+                { name: 'Heart Failure', key: 'heart_failure_risk', icon: 'ph-heart' },
+                { name: 'Kidney Failure', key: 'kidney_failure_risk', icon: 'ph-drop' },
+                { name: 'Pneumonia', key: 'pneumonia_risk', icon: 'ph-wind' }
+            ];
+
+            diseases.forEach(d => {
+                const score = latest[d.key] || 0;
+                let level = "LOW";
+                let color = "#06b6d4";
+                if (score <= 30.0) { level = "LOW"; color = "#06b6d4"; }
+                else if (score <= 60.0) { level = "MODERATE"; color = "#f59e0b"; }
+                else if (score <= 80.0) { level = "HIGH"; color = "#f97316"; }
+                else { level = "CRITICAL"; color = "#ef4444"; }
+
+                const card = document.createElement('div');
+                card.className = "glass-panel cyber-card flex flex-col items-center p-4 text-center border-t-2";
+                card.style.borderTopColor = color;
+                card.style.padding = "1rem";
+
+                card.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-2" style="background: ${color}15; color: ${color}; border: 1px solid ${color}30;">
+                        <i class="ph-fill ${d.icon} text-xl"></i>
+                    </div>
+                    <h4 style="color: var(--text-muted); font-weight: 700; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;">${d.name}</h4>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: ${color}; margin-bottom: 8px;">${score.toFixed(1)}%</div>
+                    
+                    <div style="width: 100%; background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+                        <div style="width: ${score}%; background: ${color}; height: 100%; box-shadow: 0 0 8px ${color}60;"></div>
+                    </div>
+                    
+                    <span style="background: ${color}20; color: ${color}; padding: 2px 8px; border-radius: 10px; font-weight: 800; font-size: 0.6rem; border: 1px solid ${color}40; text-transform: uppercase;">
+                        ${level}
+                    </span>
+                `;
+                container.appendChild(card);
+            });
+            document.getElementById('multiDiseaseTableContainer').style.display = 'block';
+        }
+
+        // Update History List
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+        currentPatientData.logs.slice().reverse().forEach(log => {
+            const score = log.prediction_score * 100;
+            let label = "LOW";
+            let color = "var(--success)";
+            if (score <= 30.0) { label = "LOW"; color = "#10b981"; }
+            else if (score <= 60.0) { label = "MODERATE"; color = "#eab308"; }
+            else if (score <= 80.0) { label = "HIGH"; color = "#f97316"; }
+            else { label = "CRITICAL"; color = "#ef4444"; }
+
+            const item = document.createElement('div');
+            item.className = 'nav-link';
+            item.style.color = 'var(--text-main)';
+            item.style.background = '#f8fafc';
+            item.style.border = '1px solid var(--border)';
+            item.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <p style="font-size: 0.85rem; font-weight: 700;">${label} Risk</p>
+                    <p style="font-size: 0.7rem; color: var(--text-muted);">${new Date(log.timestamp).toLocaleString()}</p>
+                </div>
+                <div style="font-weight: 700; color: ${color}">
+                    ${score.toFixed(1)}%
+                </div>
+            `;
+            list.appendChild(item);
+        });
+
+        renderChart();
+    }
+
+    function renderChart() {
+        const data = currentPatientData;
+        if (!data || !data.logs || data.logs.length === 0) return;
+
+        const vitalKey = document.getElementById('vitalSelect').value;
+        const vitalLabel = document.getElementById('vitalSelect').options[document.getElementById('vitalSelect').selectedIndex].text;
+
+        const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+        if (chart) chart.destroy();
+
+        const labels = data.logs.map(l => new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        const vitalData = data.logs.map(l => l[vitalKey]);
+        const rawRisk = data.logs.map(l => l.prediction_score * 100);
+
+        // Simple Temporal Smoothing (Moving Average) for visualization
+        const smoothedRisk = rawRisk.map((val, i, arr) => {
+            const window = arr.slice(Math.max(0, i - 2), i + 1);
+            return window.reduce((a, b) => a + b, 0) / window.length;
+        });
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: vitalLabel,
+                        data: vitalData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Smoothed Sepsis Risk (%)',
+                        data: smoothedRisk,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'Raw AI Output',
+                        data: rawRisk,
+                        borderColor: '#334155', /* Dark theme gray */
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 6, color: '#f8fafc' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: vitalLabel, color: '#f8fafc' }, grid: { borderDash: [2, 2], color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Risk Score', color: '#f8fafc' }, min: 0, max: 100, ticks: { color: '#ef4444' } }
+                }
+            }
+        });
+    }
+
+    // --- Autonomous Hospital Alert Network ---
+    let alertPollingInterval;
+
+    function fetchActiveAlerts() {
+        // We now fetch active monitoring data instead of just alerts for a more comprehensive view
+        fetch('/api/monitoring/active')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return console.error(data.error);
+                renderMonitoringTable(data);
+            })
+            .catch(err => console.error("Error fetching monitoring data:", err));
+    }
+
+    function renderMonitoringTable(records) {
+        const tbody = document.getElementById('globalAlertsTable');
+        const broadcast = document.getElementById('emergencyBroadcast'); // Keep broadcast for potential future use or remove if no longer needed here
+
+        if (!records || records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);"><i class="ph ph-shield-check" style="font-size: 2rem; display: block; margin-bottom: 10px; color: var(--success);"></i>No active patient monitoring data available.</td></tr>';
+            broadcast.style.display = 'none'; // Ensure broadcast is hidden if no records
+            return;
+        }
+
+        tbody.innerHTML = '';
+        // No emergency logic here as per new instruction, broadcast will be handled by ICU forecasting if needed.
+        // let hasEmergency = false;
+        // let emergencyHTML = '';
+
+        records.forEach(r => {
+            let statusColor = "#10b981"; // Stable
+            // let badgeClass = "stable-badge"; // Not used in provided snippet
+
+            if (r.alert_level === 'Critical') { statusColor = "#ef4444"; }
+            else if (r.alert_level === 'High') { statusColor = "#f97316"; }
+            else if (r.alert_level === 'Warning') { statusColor = "#eab308"; }
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.innerHTML = `
+                <td style="padding: 12px; font-weight: 700; color: white; font-size: 0.85rem;"><i class="ph-fill ph-user" style="color: var(--text-muted); margin-right: 5px;"></i> ${r.patient_id}</td>
+                <td style="padding: 12px; color: white; font-size: 0.85rem;"><b>${r.disease}</b> @ ${r.risk_score}%</td>
+                <td style="padding: 12px; color: var(--text-muted); font-size: 0.85rem;">General Ward</td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 12px; border-radius: 12px; font-weight: 700; font-size: 0.75rem; border: 1px solid ${statusColor}40;">
+                        ${r.alert_level.toUpperCase()}
+                    </span>
+                </td>
+                <td style="padding: 12px; text-align: right;">
+                    <button onclick="assessPatient('${r.patient_id}')" style="background: var(--primary); color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">
+                        Analyze
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        // The broadcast logic for emergency alerts is now handled by the ICU forecasting section,
+        // so we don't need to toggle it here based on individual patient alerts.
+        // if (hasEmergency) {
+        //     broadcast.innerHTML = emergencyHTML;
+        //     broadcast.style.display = 'block';
+        // } else {
+        //     broadcast.style.display = 'none';
+        // }
+    }
+
+    function acknowledgeAlert(alertId) {
+        // Simulating staff log in, hardcoding Dr. Smith for now
+        const staffName = "Dr. Smith";
+
+        fetch('/api/alerts/acknowledge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ alert_id: alertId, staff_name: staffName })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchActiveAlerts(); // refresh immediately
+                }
+            });
+    }
+
+    alertPollingInterval = setInterval(fetchActiveAlerts, 5000);
+
+    // --- Live Clinical Feed System ---
+    function fetchLiveFeed() {
+        fetch('/api/live_feed')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                renderLiveFeed(data);
+            });
+    }
+
+    function renderLiveFeed(entries) {
+        const container = document.getElementById('liveClinicalFeed');
+        if (!entries || entries.length === 0) {
+            container.innerHTML = '<span style="font-size: 0.8rem; color: var(--text-muted); text-align: center; display: block; margin-top: 20px;">No clinical activity detected.</span>';
+            return;
+        }
+
+        container.innerHTML = '';
+        entries.forEach(e => {
+            let statusColor = "#10b981"; // Stable
+            let icon = "ph-trend-down";
+
+            if (e.alert_level === 'Critical') { statusColor = "#ef4444"; icon = "ph-warning"; }
+            else if (e.alert_level === 'High') { statusColor = "#f97316"; icon = "ph-trend-up"; }
+            else if (e.alert_level === 'Warning') { statusColor = "#eab308"; icon = "ph-caret-up"; }
+
+            const entryCard = `
+                <div class="rail-alert-card" style="border-left-color: ${statusColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: ${statusColor}; text-transform: uppercase;">
+                            <i class="ph-fill ${icon}"></i> ${e.alert_level}
+                        </span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted);">${e.timestamp}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: white; font-weight: 700;">${e.patient_id}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                        <span>${e.disease}</span>
+                        <span style="font-weight: 700; color: ${statusColor};">${e.risk_score}%</span>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += entryCard;
+        });
+    }
+
+    fetchLiveFeed();
+    setInterval(fetchLiveFeed, 5000); // Poll Live Feed every 5s
+
+    // Fetch Smart Alerts for Right Rail
+    function fetchSmartAlertsRail() {
+        fetch('/api/smart_alerts?limit=8')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+                const container = document.getElementById('smartAlertsRailList');
+                if (!data.alerts || data.alerts.length === 0) {
+                    container.innerHTML = '<span style="font-size: 0.8rem; color: var(--text-muted); text-align: center; display: block; margin-top: 20px;">No alerts processing.</span>';
+                    return;
+                }
+                container.innerHTML = '';
+                data.alerts.forEach(a => {
+                    let badgeStyle = "color: var(--warning);";
+                    let iconClass = "ph-fill ph-warning-circle";
+                    if (a.alert_level === 'CRITICAL') { badgeStyle = "color: var(--danger);"; iconClass = "ph-fill ph-siren"; }
+
+                    container.innerHTML += `
+                    <div class="rail-alert-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; ${badgeStyle} display: flex; align-items: center; gap: 5px;"><i class="${iconClass}"></i> ${a.alert_level}</span>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">${a.timestamp.split(' ')[1]}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: white; font-weight: 600;">${a.patient_uid} - ${a.disease_type}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">Score: ${a.risk_score.toFixed(1)}% <span style="float: right;">Mail: ${a.email_sent === 1 ? 'Sent' : 'Pending'}</span></div>
+                    </div>
+                `;
+                });
+            });
+    }
+    fetchSmartAlertsRail();
+    setInterval(fetchSmartAlertsRail, 15000);
+
+    // --- ICU Resource Forecasting ---
+    function fetchICUResources() {
+        const scenario = document.getElementById('icuScenarioSelect').value;
+
+        fetch('/api/icu_resources/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scenario: scenario })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return console.error(data.error);
+
+                document.getElementById('icuExpectedSepsis').textContent = data.expected_critical_patients || data.expected_sepsis_patients || 0;
+                document.getElementById('icuBedsReq').textContent = data.icu_beds_required || 0;
+                document.getElementById('icuVentsReq').textContent = data.ventilators_required || 0;
+                document.getElementById('icuStaffReq').textContent = data.staff_required || 0;
+
+                if (data.data_source_description) {
+                    const infoIcon = document.getElementById('icuForecastInfo');
+                    if (infoIcon) {
+                        infoIcon.title = data.data_source_description;
+                    }
+                }
+                document.getElementById('icuTrendText').innerText = data.historical_trend;
+
+                // Trend Badge Styling with Icons
+                const trendBadge = document.getElementById('icuTrendBadge');
+                const trendIcon = document.getElementById('icuTrendIcon');
+                if (data.historical_trend === "Increasing") {
+                    trendBadge.style.color = "#f43f5e";
+                    trendBadge.style.background = "rgba(244, 63, 94, 0.15)";
+                    trendIcon.className = "ph-bold ph-chart-line-up";
+                } else if (data.historical_trend === "Decreasing") {
+                    trendBadge.style.color = "#10b981";
+                    trendBadge.style.background = "rgba(16, 185, 129, 0.15)";
+                    trendIcon.className = "ph-bold ph-chart-line-down";
+                } else {
+                    trendBadge.style.color = "var(--text-muted)";
+                    trendBadge.style.background = "rgba(255,255,255,0.05)";
+                    trendIcon.className = "ph-bold ph-minus";
+                }
+
+                // Status Badge, Icons & Data Source Text
+                const statusTextSpan = document.getElementById('icuStatusText');
+                const statusBar = document.getElementById('icuStatusBadge');
+                const statusIcon = document.getElementById('icuStatusIcon');
+                const panel = document.getElementById('icuResourcePanel');
+                const broadcast = document.getElementById('emergencyBroadcast');
+                const dataSourceText = document.getElementById('icuDataSourceText');
+
+                statusTextSpan.innerText = data.resource_status;
+                if (data.data_source_description) {
+                    dataSourceText.innerText = data.data_source_description;
+                }
+
+                if (data.resource_status === "Sufficient") {
+                    statusBar.style.background = "rgba(16, 185, 129, 0.2)";
+                    statusBar.style.color = "#10b981";
+                    statusBar.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+                    statusIcon.className = "ph-bold ph-shield-check";
+                    panel.style.borderLeftColor = "#8b5cf6";
+                } else if (data.resource_status === "Moderate Demand") {
+                    statusBar.style.background = "rgba(234, 179, 8, 0.2)";
+                    statusBar.style.color = "#eab308";
+                    statusBar.style.border = "1px solid rgba(234, 179, 8, 0.3)";
+                    statusIcon.className = "ph-bold ph-warning-circle";
+                    panel.style.borderLeftColor = "#eab308";
+                } else if (data.resource_status === "Resource Shortage Risk") {
+                    statusBar.style.background = "rgba(239, 68, 68, 0.2)";
+                    statusBar.style.color = "#ef4444";
+                    statusBar.style.border = "1px solid rgba(239, 68, 68, 0.3)";
+                    statusIcon.className = "ph-bold ph-warning-octagon";
+                    panel.style.borderLeftColor = "#ef4444";
+
+                    // Trigger global broadcast
+                    broadcast.style.display = 'block';
+                    broadcast.innerHTML = `⚠ ICU RESOURCE ALERT <br><span style="font-size:0.9rem; font-weight:500;">Predicted ICU Demand (${data.icu_beds_required} Beds) exceeds capacity (${data.max_beds} Beds). Action Required: Prepare secondary wards or transfer patients immediately.</span>`;
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    // Initial fetch of ICU resources
+    fetchICUResources();
+    setInterval(fetchICUResources, 15000); // Poll every 15s
+
+    // --- Epidemic Early Warning System ---
+    let epidemicChartInstance = null;
+
+    function fetchEpidemicData() {
+        fetch('/api/epidemic/data')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return console.error("Epidemic API Error:", data.error);
+
+                // 1. Render Chart.js
+                const ctx = document.getElementById('epidemicTrendChart').getContext('2d');
+                if (epidemicChartInstance) {
+                    epidemicChartInstance.destroy(); // destroy old chart instance
+                }
+                epidemicChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.trend_chart.dates,
+                        datasets: [
+                            { label: 'Sepsis', data: data.trend_chart.sepsis, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.4 },
+                            { label: 'Pneumonia', data: data.trend_chart.pneumonia, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 },
+                            { label: 'Kidney Failure', data: data.trend_chart.kidney_failure, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', fill: true, tension: 0.4 },
+                            { label: 'Heart Failure', data: data.trend_chart.heart_failure, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: getComputedStyle(document.body).getPropertyValue('--text-main'), font: { size: 10 } } } },
+                        scales: {
+                            x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted'), font: { size: 10 } }, grid: { color: getComputedStyle(document.body).getPropertyValue('--border') } },
+                            y: { beginAtZero: true, ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted'), font: { size: 10 }, stepSize: 1 }, grid: { color: getComputedStyle(document.body).getPropertyValue('--border') } }
+                        }
+                    }
+                });
+
+                // 2. Render Ward Heatmap
+                const wardBody = document.getElementById('wardHeatmapBody');
+                wardBody.innerHTML = '';
+                data.ward_risks.forEach(w => {
+                    let badgeColor = w.risk_level === 'High' ? '#ef4444' : w.risk_level === 'Moderate' ? '#eab308' : '#10b981';
+                    wardBody.innerHTML += `
+                    <tr>
+                        <td style="padding: 6px; font-weight: 500;">${w.ward}</td>
+                        <td style="padding: 6px;">${w.cases}</td>
+                        <td style="padding: 6px;">
+                            <span style="background: ${badgeColor}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">${w.risk_level}</span>
+                        </td>
+                    </tr>
+                `;
+                });
+
+                // 3. Render Alerts Feed
+                const alertsFeed = document.getElementById('epidemicAlertsFeed');
+                alertsFeed.innerHTML = '';
+                if (data.recent_alerts.length === 0) {
+                    alertsFeed.innerHTML = `<span style="font-size: 0.8rem; color: var(--text-muted);">No anomalies detected.</span>`;
+                } else {
+                    data.recent_alerts.forEach(a => {
+                        alertsFeed.innerHTML += `
+                        <div style="background: #fff0f2; border-left: 3px solid #ef4444; padding: 8px; border-radius: 4px;">
+                            <div style="font-size: 0.75rem; color: #ef4444; font-weight: 700;">⚠ ${a.disease_type} CLUSTER</div>
+                            <div style="font-size: 0.7rem; color: #555;">${a.target_ward} | Today: ${a.today_cases} (vs ${a.yesterday_cases})</div>
+                        </div>
+                    `;
+                    });
+                }
+            });
+    }
+
+    function simulateEpidemicOutbreak() {
+        if (!confirm("Initialize Epidemic Outbreak Simulation? This will generate 7 days of procedural background data resolving in a localized Sepsis spike in Ward B today.")) return;
+
+        document.getElementById('epidemicAlertsFeed').innerHTML = `<span style="font-size: 0.8rem; color: var(--text-muted);"><i class="ph ph-spinner ph-spin"></i> Running heuristics...</span>`;
+
+        fetch('/api/epidemic/simulate', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchEpidemicData(); // Refresh UI instantly
+                    fetchActiveAlerts(); // Global panels update if needed 
+                } else {
+                    alert("Simulation Error: " + data.error);
+                }
+            });
+    }
+
+    // Initial Fetch & Poll
+    fetchEpidemicData();
+    setInterval(fetchEpidemicData, 20000);
+
+    // --- Smart Alert Event System ---
+    let smartAlertPollingInterval;
+
+    function fetchSmartAlerts() {
+        fetch('/api/smart_alerts')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return console.error(data.error);
+                renderSmartAlerts(data.alerts);
+            })
+            .catch(err => console.error("Error fetching smart alerts:", err));
+    }
+
+    function renderSmartAlerts(alerts) {
+        const tbody = document.getElementById('smartAlertsTable');
+
+        if (!alerts || alerts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="padding: 1rem; text-align: center; color: var(--text-muted);">No smart alerts generated.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        alerts.forEach(alert => {
+            let badgeBg = "#10b98120";
+            let badgeText = "#10b981";
+
+            if (alert.alert_level === "Early Warning" || alert.alert_level === "Warning") {
+                badgeBg = "#fef9c3";
+                badgeText = "#eab308";
+            } else if (alert.alert_level === "High Risk") {
+                badgeBg = "#ffedd5";
+                badgeText = "#f97316";
+            } else if (alert.alert_level === "Critical Emergency") {
+                badgeBg = "#fee2e2";
+                badgeText = "#ef4444";
+            }
+
+            // Check escalation status
+            let escalationHTML = "";
+            let rowStyle = "";
+            if (alert.escalated) {
+                escalationHTML = `<br><span style="color: #ef4444; font-weight: bold; font-size: 0.75rem; animation: blink 1s infinite;">⚠ ESCALATED TO ICU</span>`;
+                rowStyle = "background: #fee2e2;";
+            }
+
+            const tr = document.createElement('tr');
+            tr.style.cssText = `border-bottom: 1px solid var(--border); ${rowStyle}`;
+
+            // Format timestamp slightly
+            const timeObj = new Date(alert.timestamp + 'Z');
+            const timeStr = timeObj.toLocaleString();
+
+            tr.innerHTML = `
+                <td style="padding: 12px; color: var(--text-muted);">${timeStr}</td>
+                <td style="padding: 12px; font-weight: 700; color: var(--text-main);">${alert.patient_uid}</td>
+                <td style="padding: 12px; color: var(--text-main);">${alert.disease_type}</td>
+                <td style="padding: 12px; color: var(--text-main);">${alert.risk_score.toFixed(1)}%</td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="background: ${badgeBg}; color: ${badgeText}; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;">
+                        ${alert.alert_level}
+                    </span>
+                    ${escalationHTML}
+                </td>
+                <td style="padding: 12px; font-weight: 600; color: ${alert.email_status.includes('Not Sent') ? 'var(--text-muted)' : '#3b82f6'};">
+                    ${alert.email_status}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    fetchSmartAlerts();
+    smartAlertPollingInterval = setInterval(fetchSmartAlerts, 5000);
+
+    // CSS Animations injected via JS for simplicity
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+            50% { transform: scale(1.02); box-shadow: 0 4px 25px rgba(239, 68, 68, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

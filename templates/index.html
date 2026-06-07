@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fade-in max-w-6xl mx-auto">
+    {% if error %}
+    <div
+        class="bg-red-900/20 border border-red-500/50 text-red-400 p-4 rounded-xl mb-6 flex items-center gap-3 animate-pulse shadow-neon-red">
+        <i class="ph-bold ph-warning-circle text-xl"></i>
+        <span class="font-semibold tracking-wide">{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Main Data Entry Terminal -->
+    <div class="glass-panel border-t-4 border-t-cyber-cyan p-8 mb-8 relative">
+        <!-- Decoration -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-cyber-cyan/10 blur-[50px] rounded-full pointer-events-none">
+        </div>
+
+        <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-700/50">
+            <h2 class="text-2xl font-bold flex items-center gap-3 text-white tracking-wide">
+                <i class="ph-bold ph-terminal-window text-cyber-cyan animate-pulse"></i>
+                Clinical Data Acquisition Terminal
+            </h2>
+            <div
+                class="px-3 py-1 bg-cyber-cyan/10 border border-cyber-cyan/30 rounded-md text-cyber-cyan text-xs font-mono tracking-widest uppercase shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                Input Phase
+            </div>
+        </div>
+
+        <form id="clinicalForm" action="/predict" method="POST" novalidate
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 relative z-10">
+
+            <!-- Patient Identification - Full Width Spanning -->
+            <div
+                class="col-span-1 md:col-span-2 lg:col-span-3 bg-slate-900/50 p-6 rounded-xl border border-slate-700/50 mb-2">
+                <label for="patient_uid"
+                    class="block text-sm font-bold text-cyber-cyan mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <i class="ph-bold ph-identification-card"></i> Patient Unique Identifier (UID)
+                </label>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="text" name="patient_uid" id="patient_uid" placeholder="e.g. NEO-2026-001" required
+                        pattern="[A-Za-z0-9\-]+" title="UID must contain only letters, numbers, and hyphens."
+                        class="cyber-input flex-grow font-mono text-lg tracking-wider placeholder-slate-600 bg-slate-950 border-slate-700 focus:border-cyber-cyan">
+                    <div id="autoLinkBtn"
+                        class="flex items-center justify-center gap-2 px-6 py-3 bg-cyber-blue/10 border border-cyber-blue/30 rounded-xl text-cyber-blue font-semibold text-sm whitespace-nowrap shadow-[0_0_15px_rgba(59,130,246,0.15)] cursor-pointer hover:bg-cyber-blue/20 hover:scale-[1.02] transition-all duration-300">
+                        <i class="ph-bold ph-database-backup"></i>
+                        <span>Auto-Link History</span>
+                    </div>
+                </div>
+                <span class="field-error text-xs text-red-400 mt-1 hidden" id="patient_uid-error"></span>
+            </div>
+
+            <!-- Heart Rate -->
+            <div class="space-y-1.5 group">
+                <label for="HR"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Heart Rate <span class="text-slate-500 font-normal ml-1">(bpm)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">20 – 300</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-heartbeat absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="HR" id="HR" placeholder="60 – 140" min="20" max="300" required
+                        class="cyber-input pl-10 font-mono"
+                        title="Normal range: 60–100 bpm. Clinical range: 20–300 bpm.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="HR-error"></span>
+            </div>
+
+            <!-- O2 Saturation -->
+            <div class="space-y-1.5 group">
+                <label for="O2Sat"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>O2 Saturation <span class="text-slate-500 font-normal ml-1">(%)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">50 – 100</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-lungs absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="O2Sat" id="O2Sat" placeholder="95 – 100" min="50" max="100"
+                        required class="cyber-input pl-10 font-mono" title="Normal: ≥95%. Clinical range: 50–100%.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="O2Sat-error"></span>
+            </div>
+
+            <!-- Temperature -->
+            <div class="space-y-1.5 group">
+                <label for="Temp"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Temperature <span class="text-slate-500 font-normal ml-1">(°C)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">25 – 45</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-thermometer absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="Temp" id="Temp" placeholder="36.5 – 37.5" min="25" max="45"
+                        required class="cyber-input pl-10 font-mono"
+                        title="Normal: 36.5–37.5°C. Clinical range: 25–45°C.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="Temp-error"></span>
+            </div>
+
+            <!-- Systolic BP -->
+            <div class="space-y-1.5 group">
+                <label for="SBP"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Systolic BP <span class="text-slate-500 font-normal ml-1">(mmHg)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">40 – 300</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-activity absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="SBP" id="SBP" placeholder="90 – 140" min="40" max="300"
+                        required class="cyber-input pl-10 font-mono"
+                        title="Normal: 90–140 mmHg. Clinical range: 40–300 mmHg.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="SBP-error"></span>
+            </div>
+
+            <!-- MAP -->
+            <div class="space-y-1.5 group">
+                <label for="MAP"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Mean Arterial P. <span class="text-slate-500 font-normal ml-1">(mmHg)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">20 – 200</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-activity absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="MAP" id="MAP" placeholder="70 – 100" min="20" max="200"
+                        required class="cyber-input pl-10 font-mono"
+                        title="Normal: 70–100 mmHg. Clinical range: 20–200 mmHg.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="MAP-error"></span>
+            </div>
+
+            <!-- Diastolic BP -->
+            <div class="space-y-1.5 group">
+                <label for="DBP"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Diastolic BP <span class="text-slate-500 font-normal ml-1">(mmHg)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">20 – 200</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-activity absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="DBP" id="DBP" placeholder="60 – 90" min="20" max="200"
+                        required class="cyber-input pl-10 font-mono"
+                        title="Normal: 60–90 mmHg. Clinical range: 20–200 mmHg.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="DBP-error"></span>
+            </div>
+
+            <!-- Respiration Rate -->
+            <div class="space-y-1.5 group">
+                <label for="Resp"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Respiration Rate <span class="text-slate-500 font-normal ml-1">(bpm)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">4 – 60</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-wind absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="Resp" id="Resp" placeholder="12 – 20" min="4" max="60"
+                        required class="cyber-input pl-10 font-mono"
+                        title="Normal: 12–20 bpm. Clinical range: 4–60 bpm.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="Resp-error"></span>
+            </div>
+
+            <!-- WBC Count -->
+            <div class="space-y-1.5 group">
+                <label for="WBC"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>WBC Count <span class="text-slate-500 font-normal ml-1">(10⁹/L)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">0.5 – 500</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-drop absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.1" name="WBC" id="WBC" placeholder="4.5 – 11" min="0.5" max="500"
+                        required class="cyber-input pl-10 font-mono"
+                        title="Normal: 4.5–11 ×10⁹/L. Clinical range: 0.5–500 ×10⁹/L.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="WBC-error"></span>
+            </div>
+
+            <!-- Lactate -->
+            <div class="space-y-1.5 group">
+                <label for="Lactate"
+                    class="block text-sm font-semibold text-slate-300 group-hover:text-cyber-cyan transition-colors flex items-center justify-between">
+                    <span>Lactate <span class="text-slate-500 font-normal ml-1">(mmol/L)</span></span>
+                    <span class="text-xs text-slate-500 font-mono">0.1 – 30</span>
+                </label>
+                <div class="relative">
+                    <i
+                        class="ph-fill ph-flask absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-cyan transition-colors"></i>
+                    <input type="number" step="0.01" name="Lactate" id="Lactate" placeholder="0.5 – 2.0" min="0.1"
+                        max="30" required class="cyber-input pl-10 font-mono"
+                        title="Normal: 0.5–2.0 mmol/L. Clinical range: 0.1–30 mmol/L.">
+                </div>
+                <span class="field-error text-xs text-red-400 hidden" id="Lactate-error"></span>
+            </div>
+
+            <!-- Submit Button spanning all columns -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-3 mt-6">
+                <button type="submit" id="submitBtn"
+                    class="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-cyber-cyan to-cyber-blue text-white font-bold text-lg rounded-xl border border-cyber-cyan/50 shadow-neon-cyan transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] group">
+                    <i class="ph-bold ph-lightning text-2xl group-hover:animate-pulse"></i>
+                    Initialize NeoGuard Intelligence Assessment
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Features Section -> Upgraded to Cyber Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="cyber-card glass-panel flex flex-col items-center text-center p-8">
+            <div
+                class="w-16 h-16 rounded-full bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center mb-6 shadow-neon-cyan relative">
+                <div class="absolute inset-0 bg-cyber-cyan/20 blur-md rounded-full"></div>
+                <i class="ph-bold ph-brain text-3xl text-cyber-cyan relative z-10"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 tracking-wide text-neon-cyan">Deep Ensemble Core</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">Advanced XGBoost + LSTM architectures running parallel
+                temporal pattern recognition on live vitals.</p>
+        </div>
+
+        <div class="cyber-card glass-panel flex flex-col items-center text-center p-8">
+            <div
+                class="w-16 h-16 rounded-full bg-cyber-blue/10 border border-cyber-blue/30 flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(59,130,246,0.5)] relative">
+                <div class="absolute inset-0 bg-cyber-blue/20 blur-md rounded-full"></div>
+                <i class="ph-bold ph-clock-counter-clockwise text-3xl text-cyber-blue relative z-10"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 tracking-wide text-neon-blue">Continuous Tracking</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">Automatic time-series analysis and historical aggregation
+                for every patient monitoring session.</p>
+        </div>
+
+        <div class="cyber-card glass-panel flex flex-col items-center text-center p-8">
+            <div
+                class="w-16 h-16 rounded-full bg-cyber-green/10 border border-cyber-green/30 flex items-center justify-center mb-6 shadow-neon-green relative">
+                <div class="absolute inset-0 bg-cyber-green/20 blur-md rounded-full"></div>
+                <i class="ph-bold ph-file-pdf text-3xl text-cyber-green relative z-10"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 tracking-wide text-neon-green">Diagnostic Reports</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">Instantly generate enterprise-ready clinical reports with
+                detailed multi-disease risk estimations.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Real-Time Validation Script ── -->
+<script>
+    (function () {
+        // Constraint definitions for each field
+        const CONSTRAINTS = {
+            HR: { min: 20, max: 300, label: 'Heart Rate', unit: 'bpm' },
+            O2Sat: { min: 50, max: 100, label: 'O2 Saturation', unit: '%' },
+            Temp: { min: 25, max: 45, label: 'Temperature', unit: '°C' },
+            SBP: { min: 40, max: 300, label: 'Systolic BP', unit: 'mmHg' },
+            MAP: { min: 20, max: 200, label: 'Mean Arterial P.', unit: 'mmHg' },
+            DBP: { min: 20, max: 200, label: 'Diastolic BP', unit: 'mmHg' },
+            Resp: { min: 4, max: 60, label: 'Respiration Rate', unit: 'bpm' },
+            WBC: { min: 0.5, max: 500, label: 'WBC Count', unit: '×10⁹/L' },
+            Lactate: { min: 0.1, max: 30, label: 'Lactate', unit: 'mmol/L' },
+        };
+
+        function showError(fieldId, msg) {
+            const el = document.getElementById(fieldId + '-error');
+            const inp = document.getElementById(fieldId);
+            if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+            if (inp) { inp.classList.add('border-red-500'); inp.classList.remove('border-slate-700'); }
+        }
+
+        function clearError(fieldId) {
+            const el = document.getElementById(fieldId + '-error');
+            const inp = document.getElementById(fieldId);
+            if (el) { el.textContent = ''; el.classList.add('hidden'); }
+            if (inp) { inp.classList.remove('border-red-500'); inp.classList.add('border-slate-700'); }
+        }
+
+        function validateField(fieldId) {
+            const c = CONSTRAINTS[fieldId];
+            if (!c) return true;
+            const inp = document.getElementById(fieldId);
+            if (!inp) return true;
+
+            const raw = inp.value.trim();
+            if (raw === '') {
+                showError(fieldId, `${c.label} is required.`);
+                return false;
+            }
+            const val = parseFloat(raw);
+            if (isNaN(val)) {
+                showError(fieldId, `${c.label} must be a valid number.`);
+                return false;
+            }
+            if (val < c.min || val > c.max) {
+                showError(fieldId, `${c.label} must be between ${c.min} and ${c.max} ${c.unit}.`);
+                return false;
+            }
+            clearError(fieldId);
+            return true;
+        }
+
+        // Attach live validation on blur & input
+        Object.keys(CONSTRAINTS).forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('blur', () => validateField(id));
+            el.addEventListener('input', () => {
+                if (!document.getElementById(id + '-error').classList.contains('hidden')) {
+                    validateField(id); // Clear error as user types to fix it
+                }
+            });
+        });
+
+        // Validate UID on blur
+        const uidEl = document.getElementById('patient_uid');
+        if (uidEl) {
+            uidEl.addEventListener('blur', () => {
+                const v = uidEl.value.trim();
+                const errEl = document.getElementById('patient_uid-error');
+                if (!v) {
+                    errEl.textContent = 'Patient UID is required.';
+                    errEl.classList.remove('hidden');
+                    uidEl.classList.add('border-red-500');
+                } else if (!/^[A-Za-z0-9\-]+$/.test(v)) {
+                    errEl.textContent = 'UID must contain only letters, numbers, and hyphens.';
+                    errEl.classList.remove('hidden');
+                    uidEl.classList.add('border-red-500');
+                } else {
+                    errEl.classList.add('hidden');
+                    uidEl.classList.remove('border-red-500');
+                }
+            });
+        }
+
+        // Block submission if any field is invalid
+        const form = document.getElementById('clinicalForm');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                let valid = true;
+
+                // Validate UID
+                const uid = document.getElementById('patient_uid').value.trim();
+                const uidErr = document.getElementById('patient_uid-error');
+                if (!uid || !/^[A-Za-z0-9\-]+$/.test(uid)) {
+                    uidErr.textContent = !uid ? 'Patient UID is required.' : 'UID must contain only letters, numbers, and hyphens.';
+                    uidErr.classList.remove('hidden');
+                    document.getElementById('patient_uid').classList.add('border-red-500');
+                    valid = false;
+                }
+
+                // Validate all medical fields
+                Object.keys(CONSTRAINTS).forEach(id => {
+                    if (!validateField(id)) valid = false;
+                });
+
+                if (!valid) {
+                    e.preventDefault();
+                    // Scroll to first error
+                    const first = form.querySelector('.border-red-500');
+                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+        // --- Auto-Link History Logic ---
+        const autoLinkBtn = document.getElementById('autoLinkBtn');
+        if (autoLinkBtn && uidEl) {
+            autoLinkBtn.addEventListener('click', async () => {
+                const uid = uidEl.value.trim();
+                const btnText = autoLinkBtn.querySelector('span');
+                const btnIcon = autoLinkBtn.querySelector('i');
+                const errEl = document.getElementById('patient_uid-error');
+
+                if (!uid) {
+                    uidEl.classList.add('border-red-500');
+                    errEl.textContent = 'Patient UID is required to link history.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Temporary loading state
+                const originalText = btnText.textContent;
+                btnText.textContent = 'Searching...';
+                btnIcon.className = 'ph-bold ph-spinner animate-spin';
+                autoLinkBtn.classList.add('opacity-75');
+
+                try {
+                    const res = await fetch(`/api/history/${uid}`);
+                    const data = await res.json();
+
+                    if (res.ok && data.logs && data.logs.length > 0) {
+                        // Get the most recent log
+                        const latest = data.logs[data.logs.length - 1];
+
+                        // Auto-fill form fields
+                        const mapping = {
+                            'HR': latest.hr,
+                            'O2Sat': latest.o2sat,
+                            'Temp': latest.temp,
+                            'SBP': latest.sbp,
+                            'MAP': latest.map,
+                            'DBP': latest.dbp,
+                            'Resp': latest.resp,
+                            'WBC': latest.wbc,
+                            'Lactate': latest.lactate
+                        };
+
+                        Object.keys(mapping).forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el && mapping[id] !== undefined && mapping[id] !== null) {
+                                el.value = mapping[id];
+                                // Dispatch input event to trigger validation and clear any existing errors
+                                el.dispatchEvent(new Event('input'));
+                            }
+                        });
+
+                        // Success state
+                        btnText.textContent = 'History Linked!';
+                        btnIcon.className = 'ph-bold ph-check-circle';
+                        autoLinkBtn.classList.replace('bg-cyber-blue/10', 'bg-cyber-green/20');
+                        autoLinkBtn.classList.replace('border-cyber-blue/30', 'border-cyber-green/50');
+                        autoLinkBtn.classList.replace('text-cyber-blue', 'text-cyber-green');
+
+                        setTimeout(() => {
+                            btnText.textContent = originalText;
+                            btnIcon.className = 'ph-bold ph-database-backup';
+                            autoLinkBtn.classList.replace('bg-cyber-green/20', 'bg-cyber-blue/10');
+                            autoLinkBtn.classList.replace('border-cyber-green/50', 'border-cyber-blue/30');
+                            autoLinkBtn.classList.replace('text-cyber-green', 'text-cyber-blue');
+                        }, 3000);
+
+                    } else {
+                        throw new Error(data.error || 'No history found for ID.');
+                    }
+                } catch (err) {
+                    console.error('Auto-Link Error:', err);
+                    uidEl.classList.add('border-red-500');
+                    errEl.textContent = err.message || 'Error fetching history.';
+                    errEl.classList.remove('hidden');
+
+                    btnText.textContent = 'Not Found';
+                    btnIcon.className = 'ph-bold ph-warning-circle';
+                    setTimeout(() => {
+                        btnText.textContent = originalText;
+                        btnIcon.className = 'ph-bold ph-database-backup';
+                    }, 2000);
+                } finally {
+                    autoLinkBtn.classList.remove('opacity-75');
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %}

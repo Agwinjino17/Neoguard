@@ -1,0 +1,8 @@
+{
+    "sender_email": "madhansenthil204@gmail.com",
+    "sender_password": "okgdefresyycgqek",
+    "receiver_email": "sathishkumar77393@gmail.com",
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "alert_enabled": true
+}

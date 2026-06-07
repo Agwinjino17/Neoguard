@@ -1,0 +1,164 @@
+/* NeoGuard CSS - Tailwind Companion for Futuristic UI */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #06b6d4;
+    --primary-hover: #0891b2;
+    --secondary: #3b82f6;
+    --accent: #f43f5e;
+    --background: #0f172a;
+    --surface: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --glass: rgba(30, 41, 59, 0.7);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text-main);
+    line-height: 1.5;
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Cyber Aesthetic */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #020617;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #06b6d4;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0891b2;
+}
+
+/* Glassmorphism Panel Container */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+}
+
+/* Futuristic Card Animation */
+.cyber-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cyber-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.3);
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
+/* Form Styles Override (Tailwind forms plugin alternative) */
+.cyber-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    color: #f8fafc;
+    transition: all 0.3s ease;
+}
+
+.cyber-input:focus {
+    outline: none;
+    border-color: #06b6d4;
+    background: rgba(6, 182, 212, 0.05);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+/* UI Glitch/Neon Effects */
+.text-neon-cyan {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.text-neon-red {
+    text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulse-border {
+    0% {
+        border-color: rgba(244, 63, 94, 0.2);
+    }
+
+    50% {
+        border-color: rgba(244, 63, 94, 0.8);
+        box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
+    }
+
+    100% {
+        border-color: rgba(244, 63, 94, 0.2);
+    }
+}
+
+.animate-pulse-border {
+    animation: pulse-border 2s infinite;
+}

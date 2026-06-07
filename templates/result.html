@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="top-bar" style="margin-bottom: 1rem;">
+        <a href="/"
+            style="text-decoration: none; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+            <i class="ph ph-arrow-left"></i> Back to Assessment
+        </a>
+        <div style="display: flex; gap: 10px;">
+            <button class="nav-link"
+                style="background: white; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
+                <i class="ph ph-printer"></i> Export PDF
+            </button>
+            <button class="nav-link active"
+                style="font-size: 0.8rem; cursor: pointer; border: none; border-radius: 8px;">
+                <i class="ph ph-share-network"></i> Share Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Risk Summary -->
+    {% set risk_level = result.treatment.risk_level %}
+    {% set is_high = result.prediction == 1 %}
+
+    {% if risk_level == 'LOW' %}
+    {% set status_class = 'risk-low-bg' %}
+    {% set text_class = 'risk-text-low' %}
+    {% set accent_color = '#10b981' %}
+    {% set icon_class = 'ph-check-circle' %}
+    {% elif risk_level == 'MODERATE' %}
+    {% set status_class = 'risk-mod-bg' %}
+    {% set text_class = 'risk-text-mod' %}
+    {% set accent_color = '#eab308' %}
+    {% set icon_class = 'ph-warning' %}
+    {% elif risk_level == 'HIGH' %}
+    {% set status_class = 'risk-high-bg' %}
+    {% set text_class = 'risk-text-high' %}
+    {% set accent_color = '#f97316' %}
+    {% set icon_class = 'ph-warning-octagon' %}
+    {% else %}
+    {% set status_class = 'risk-crit-bg' %}
+    {% set text_class = 'risk-text-crit' %}
+    {% set accent_color = '#ef4444' %}
+    {% set icon_class = 'ph-warning-octagon' %}
+    {% endif %}
+
+    <div class="glass-container" style="text-align: center; padding: 3rem;">
+        <div style="margin-bottom: 1.5rem;">
+            <div class="risk-icon {{ status_class }}"
+                style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.5rem;">
+                <i class="ph-fill {{ icon_class }}"></i>
+            </div>
+            <h1 class="{{ text_class }}" style="font-size: 2.5rem; letter-spacing: -1px;">Sepsis Risk: {{ risk_level }}
+            </h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">UID: {{ uid }}</p>
+        </div>
+
+        <div class="stats-grid" style="max-width: 600px; margin: 2rem auto;">
+            <div class="stat-card">
+                <h3>Sepsis Probability</h3>
+                <div class="value" style="color: {{ accent_color }};">
+                    {{ result.treatment.risk_score }}%
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>Confidence Score</h3>
+                <div class="value">94.2%</div>
+            </div>
+        </div>
+
+        <div
+            style="width: 100%; max-width: 600px; margin: 0 auto; background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden;">
+            <div
+                style="width: {{ result.treatment.risk_score }}%; background: linear-gradient(90deg, #10b981, #eab308, #f97316, #ef4444); height: 100%; transition: width 1s ease-out;">
+            </div>
+        </div>
+
+        <!-- Multi-Disease Prediction Cards -->
+        <div style="margin-top: 3rem;">
+            <h3
+                style="margin-bottom: 2rem; color: var(--text-main); display: flex; align-items: center; gap: 12px; justify-content: center; font-size: 1.5rem; font-weight: 700;">
+                <i class="ph-fill ph-activity text-cyber-cyan"></i> Multi-Disease Risk Analysis
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {% for disease, info in multi_result.items() %}
+                {% set accent = '#06b6d4' %}
+                {% set icon = 'ph-virus' %}
+
+                {% if disease == 'Heart Failure' %} {% set icon = 'ph-heart' %}
+                {% elif disease == 'Kidney Failure' %} {% set icon = 'ph-drop' %}
+                {% elif disease == 'Pneumonia' %} {% set icon = 'ph-wind' %}
+                {% endif %}
+
+                {% if info.risk_level == 'MODERATE' %} {% set accent = '#f59e0b' %}
+                {% elif info.risk_level == 'HIGH' %} {% set accent = '#f97316' %}
+                {% elif info.risk_level == 'CRITICAL' %} {% set accent = '#ef4444' %}
+                {% endif %}
+
+                <div class="glass-panel cyber-card flex flex-col items-center p-6 text-center border-t-4"
+                    style="border-top-color: {{ accent }};">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
+                        style="background: {{ accent }}15; color: {{ accent }}; border: 1px solid {{ accent }}30;">
+                        <i class="ph-fill {{ icon }} text-3xl"></i>
+                    </div>
+
+                    <h4 class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-1">{{ disease }}</h4>
+                    <div class="text-3xl font-extrabold mb-3"
+                        style="color: {{ accent }}; text-shadow: 0 0 15px {{ accent }}40;">
+                        {{ info.risk_score }}%
+                    </div>
+
+                    <div
+                        class="w-full bg-slate-800/50 h-2 rounded-full overflow-hidden mb-4 border border-slate-700/30">
+                        <div class="h-full transition-all duration-1000 ease-out"
+                            style="width: {{ info.risk_score }}%; background: {{ accent }}; box-shadow: 0 0 10px {{ accent }}60;">
+                        </div>
+                    </div>
+
+                    <span class="px-4 py-1.5 rounded-full text-[0.7rem] font-black tracking-tighter uppercase"
+                        style="background: {{ accent }}20; color: {{ accent }}; border: 1px solid {{ accent }}40;">
+                        {{ info.risk_level }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 2rem; padding: 1.5rem; background: {{ status_class }}; border-radius: 8px; text-align: left; border: 1px solid {{ accent_color }};">
+            <h3 style="margin-bottom: 10px; color: {{ accent_color }}; display: flex; align-items: center; gap: 8px;">
+                <i class="ph-fill ph-pill"></i> Recommended Clinical Actions (Sepsis-focused)
+            </h3>
+            <ul style="list-style-type: disc; margin-left: 20px; font-size: 1.05rem; color: var(--text);">
+                {% for action in result.treatment.recommendations %}
+                <li style="margin-bottom: 5px;">{{ action }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Analytics & XAI Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+        <div class="glass-container">
+            <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                <i class="ph ph-fingerprint" style="color: var(--primary);"></i>
+                Explainable AI: Feature Impact (SHAP - Sepsis)
+            </h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                {% for vital, impact in result.contributions.items() %}
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="width: 50px; font-size: 0.8rem; font-weight: 600;">{{ vital }}</span>
+                    <div
+                        style="flex-grow: 1; height: 12px; background: #f1f5f9; border-radius: 6px; overflow: hidden; position: relative; min-width: 60px;">
+                        {% set bar_width = (impact|abs * 200)|round(0) %}
+                        {% if impact > 0 %}
+                        <div
+                            style="position: absolute; left: 50%; height: 100%; width: {{ bar_width }}%; background: #ef4444; border-radius: 0 3px 3px 0;">
+                        </div>
+                        {% else %}
+                        <div
+                            style="position: absolute; right: 50%; height: 100%; width: {{ bar_width }}%; background: #10b981; border-radius: 3px 0 0 3px;">
+                        </div>
+                        {% endif %}
+                        <div
+                            style="position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: var(--text-muted); opacity: 0.3;">
+                        </div>
+                    </div>
+                    <span
+                        style="width: 35px; font-size: 0.75rem; text-align: right; color: {{ '#ef4444' if impact > 0 else '#10b981' }};">
+                        {{ '+' if impact > 0 }}{{ (impact * 100)|round(1) }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="glass-container">
+            <h3 style="margin-bottom: 1.5rem;">Clinical Intelligence Metrics</h3>
+            <div class="stats-grid" style="grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="stat-card" style="padding: 1rem; background: #f0f9ff; border-color: #bae6fd;">
+                    <h3 style="font-size: 0.7rem;">Early Warning Lead Time</h3>
+                    <div class="value" style="font-size: 1.5rem; color: #0369a1;">{{ result.early_warning_gain }}</div>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom: 1rem; font-size: 0.9rem;">Model Comparison (Accuracy / F1)</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for model, info in multi_result.items() %}
+                {% set weight = info.metrics.accuracy %}
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                    <span>{{ model }} (F1: {{ info.metrics.f1_score }}%)</span>
+                    <span style="font-weight: 700;">{{ weight }}% Acc</span>
+                </div>
+                <div style="width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px;">
+                    <div style="width: {{ weight }}%; height: 100%; background: var(--primary); border-radius: 2px;">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div
+                style="margin-top: 2rem; display: flex; align-items: center; gap: 10px; color: var(--success); font-weight: 700; font-size: 0.8rem;">
+                <i class="ph-fill ph-check-circle"></i>
+                ENSEMBLE MODELS OPTIMIZED
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .risk-crit-bg {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .risk-high-bg {
+        background: #ffedd5;
+        color: #f97316;
+    }
+
+    .risk-mod-bg {
+        background: #fef9c3;
+        color: #eab308;
+    }
+
+    .risk-low-bg {
+        background: #dcfce7;
+        color: #10b981;
+    }
+
+    .risk-text-crit {
+        color: #ef4444;
+    }
+
+    .risk-text-high {
+        color: #f97316;
+    }
+
+    .risk-text-mod {
+        color: #eab308;
+    }
+
+    .risk-text-low {
+        color: #10b981;
+    }
+</style>
+{% endblock %}

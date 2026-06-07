@@ -1,0 +1,8 @@
+flask
+pandas
+numpy
+scikit-learn
+xgboost
+openpyxl
+jinja2
+pickle5; python_version < '3.8'

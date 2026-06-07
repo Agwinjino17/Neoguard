@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="glass-container" style="padding: 2.5rem;">
+        <h2 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
+            <i class="ph-bold ph-gear-six" style="color: var(--primary);"></i>
+            NeoGuard System Configuration
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+            <!-- Model Settings -->
+            <div>
+                <h3
+                    style="font-size: 1.1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    Algorithm & Thresholds
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-slate-200">Sepsis Detection Threshold (%)</label>
+                        <input type="range" class="w-full accent-cyber-cyan cursor-pointer" min="30" max="90"
+                            value="50">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>High Sensitivity (30%)</span>
+                            <span>Standard (50%)</span>
+                            <span>High Specificity (90%)</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-slate-200">Temporal Smoothing Window (Hours)</label>
+                        <select
+                            class="cyber-input w-full cursor-pointer appearance-none bg-cyber-surface border-slate-700/50 text-slate-200 focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan/50">
+                            <option class="bg-cyber-surface text-slate-200">2 Hours</option>
+                            <option class="bg-cyber-surface text-slate-200" selected>4 Hours (Recommended)</option>
+                            <option class="bg-cyber-surface text-slate-200">6 Hours</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UI/Alert Settings -->
+            <div>
+                <h3
+                    style="font-size: 1.1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    System Interface & Alerts
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div
+                        class="flex justify-between items-center p-4 bg-cyber-surface border border-slate-700/50 rounded-xl hover:border-slate-600 transition-colors">
+                        <div>
+                            <p class="font-semibold text-sm text-slate-200">Auto-Refresh Dashboard</p>
+                            <p class="text-xs text-slate-400 mt-1">Real-time NICU telemetry sync</p>
+                        </div>
+                        <input type="checkbox" checked class="w-5 h-5 accent-cyber-cyan cursor-pointer">
+                    </div>
+                    <div
+                        class="flex justify-between items-center p-4 bg-cyber-red/10 border border-cyber-red/20 rounded-xl hover:border-cyber-red/30 transition-colors">
+                        <div>
+                            <p class="font-semibold text-sm text-cyber-red">Critical Alarm Fatigue Filter</p>
+                            <p class="text-xs text-red-300/80 mt-1">Prioritize high-probability alerts</p>
+                        </div>
+                        <input type="checkbox" checked class="w-5 h-5 accent-cyber-red cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 15px;">
+            <button id="resetSettingsBtn" class="nav-link"
+                style="padding: 10px 25px; border: 1px solid var(--border); border-radius: 10px; transition: all 0.2s;">Reset
+                to
+                Defaults</button>
+            <button id="saveSettingsBtn" class="btn-primary flex items-center gap-2"
+                style="margin: 0; width: auto; padding: 10px 35px; transition: all 0.2s;">
+                <i class="ph-fill ph-floppy-disk hidden" id="saveSpinner"></i> Save Configuration
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-container" style="margin-top: 2rem; padding: 2rem; border-color: var(--border);">
+        <h3 style="font-size: 1rem; color: var(--cyber-cyan); margin-bottom: 1rem;">Admin Diagnostics</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+            <div class="bg-cyber-surface border border-slate-700/50 rounded-xl p-4 text-center">
+                <p class="text-xs text-slate-400">DB Uptime</p>
+                <p class="font-bold text-cyber-cyan mt-1">99.9%</p>
+            </div>
+            <div class="bg-cyber-surface border border-slate-700/50 rounded-xl p-4 text-center">
+                <p class="text-xs text-slate-400">Model Drift</p>
+                <p class="font-bold text-cyber-cyan mt-1">+0.12%</p>
+            </div>
+            <div class="bg-cyber-surface border border-slate-700/50 rounded-xl p-4 text-center">
+                <p class="text-xs text-slate-400">Inference Latency</p>
+                <p class="font-bold text-cyber-cyan mt-1">42ms</p>
+            </div>
+            <div class="bg-cyber-surface border border-slate-700/50 rounded-xl p-4 text-center">
+                <p class="text-xs text-slate-400">Storage Used</p>
+                <p class="font-bold text-cyber-cyan mt-1">12.4 MB</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div id="toastContainer"
+    class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[2000] flex flex-col gap-3 pointer-events-none"></div>
+
+<script>
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+
+        let bgColor = type === 'success' ? 'bg-cyber-green/20' : 'bg-cyber-red/20';
+        let borderColor = type === 'success' ? 'border-cyber-green/50' : 'border-cyber-red/50';
+        let textColor = type === 'success' ? 'text-cyber-green' : 'text-cyber-red';
+        let icon = type === 'success' ? 'ph-check-circle' : 'ph-x-circle';
+
+        toast.className = `flex items-center gap-3 px-6 py-3 rounded-full border backdrop-blur-md shadow-panel transition-all duration-300 transform translate-y-10 opacity-0 ${bgColor} ${borderColor}`;
+        toast.innerHTML = `
+            <i class="ph-fill ${icon} ${textColor} text-xl"></i>
+            <span class="text-sm font-bold text-white tracking-wide">${message}</span>
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(() => {
+            toast.classList.remove('translate-y-10', 'opacity-0');
+        }, 10);
+
+        // Animate out and remove
+        setTimeout(() => {
+            toast.classList.add('opacity-0', '-translate-y-2');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    const resetBtn = document.getElementById('resetSettingsBtn');
+    const saveSpinner = document.getElementById('saveSpinner');
+
+    saveBtn.addEventListener('click', async () => {
+        // UI Feedback
+        saveBtn.disabled = true;
+        saveSpinner.classList.remove('hidden');
+        saveSpinner.classList.add('animate-spin');
+
+        try {
+            const response = await fetch('/api/settings/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sepsis_threshold: document.querySelector('input[type="range"]').value,
+                    temporal_window: document.querySelector('select').value,
+                    auto_refresh: document.querySelectorAll('input[type="checkbox"]')[0].checked,
+                    critical_filter: document.querySelectorAll('input[type="checkbox"]')[1].checked
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Configuration saved successfully to NeoGuard core.');
+            } else {
+                showToast(data.error || 'Failed to save configuration.', 'error');
+            }
+        } catch (e) {
+            showToast('Network error while saving settings.', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveSpinner.classList.add('hidden');
+            saveSpinner.classList.remove('animate-spin');
+        }
+    });
+
+    resetBtn.addEventListener('click', async () => {
+        resetBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/settings/reset', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Settings reset to factory defaults.');
+                // Quick reload to show default UI values
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(data.error || 'Failed to reset settings.', 'error');
+            }
+        } catch (e) {
+            showToast('Network error while resetting settings.', 'error');
+        } finally {
+            resetBtn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

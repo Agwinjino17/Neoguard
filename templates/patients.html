@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="glass-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2>Patient Records</h2>
+            <div style="display: flex; gap: 10px;">
+                <button class="nav-link"
+                    style="background: white; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
+                    <i class="ph ph-file-csv"></i> Export All
+                </button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border);">
+                        <th style="padding: 12px; font-weight: 600; color: var(--text-muted);">UID</th>
+                        <th style="padding: 12px; font-weight: 600; color: var(--text-muted);">CREATED AT</th>
+                        <th style="padding: 12px; font-weight: 600; color: var(--text-muted);">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 16px; font-weight: 600; font-family: monospace;">{{ patient.patient_uid }}
+                        </td>
+                        <td style="padding: 16px; color: var(--text-muted);">{{ patient.created_at }}</td>
+                        <td style="padding: 16px;">
+                            <a href="/dashboard?uid={{ patient.patient_uid }}"
+                                style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.85rem;">
+                                View History →
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                            No patient records found in the NeoGuard database.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

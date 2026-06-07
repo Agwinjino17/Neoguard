@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fade-in">
+    {% if error %}
+    <div class="risk-alert risk-high">
+        <i class="ph-bold ph-warning-circle"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <div class="glass-container" style="text-align: center; padding: 4rem 2rem;">
+        <i class="ph ph-file-arrow-up" style="font-size: 4rem; color: var(--primary); margin-bottom: 1.5rem;"></i>
+        <h2 style="margin-bottom: 1rem;">Batch Intelligence Analysis</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2.5rem; max-width: 600px; margin-inline: auto;">
+            Upload clinical data in CSV or Excel format for high-throughput sepsis risk screening.
+            NeoGuard will process each record through the ensemble neural pipeline.
+        </p>
+
+        <form action="/upload" method="POST" enctype="multipart/form-data" style="max-width: 400px; margin: 0 auto;">
+            <div style="border: 2px dashed var(--border); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; background: #f8fafc; cursor: pointer;"
+                onclick="document.getElementById('fileInput').click()">
+                <p style="font-size: 0.9rem; font-weight: 500; color: var(--text-main);">Click to select document</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">CSV, XLS, XLSX (Max 10MB)</p>
+                <input type="file" name="file" id="fileInput" style="display: none;"
+                    onchange="document.getElementById('fileName').innerText = this.files[0].name">
+                <p id="fileName" style="margin-top: 10px; font-weight: 600; color: var(--primary);"></p>
+            </div>
+
+            <button type="submit" class="btn-primary" style="margin: 0; width: 100%;">
+                <i class="ph ph-lightning"></i> Process Batch
+            </button>
+        </form>
+    </div>
+
+    {% if table_data %}
+    <div class="glass-container" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h3>Batch Analysis Results</h3>
+            {% if download %}
+            <a href="/download" class="nav-link active" style="font-size: 0.8rem; text-decoration: none;">
+                <i class="ph ph-download-simple"></i> Download Excel Report
+            </a>
+            {% endif %}
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border);">
+                        {% for key in table_data[0].keys() %}
+                        <th style="padding: 12px; font-weight: 600; color: var(--text-muted); text-align: left;">{{ key
+                            }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data %}
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        {% for val in row.values() %}
+                        <td style="padding: 12px; font-size: 0.9rem;">
+                            {% if val == "High Risk" %}
+                            <span style="color: #ef4444; font-weight: 700;">{{ val }}</span>
+                            {% elif val == "Low Risk" %}
+                            <span style="color: #10b981; font-weight: 700;">{{ val }}</span>
+                            {% else %}
+                            {{ val }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
